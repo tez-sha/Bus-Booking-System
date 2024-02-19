@@ -36,26 +36,30 @@ public class SecurityConfig {
 	@Bean
 	public SecurityFilterChain authorizeRequests(HttpSecurity http) throws Exception {
 		http.cors().and().csrf().disable().exceptionHandling().authenticationEntryPoint(authEntry).and()
+				.authorizeRequests().antMatchers("/", "/static/**", "/assets/**",
+						// station
+						"/station/getstations")
+				.permitAll().and()
 				.authorizeRequests().antMatchers(
 						// user
 						"/user/signup", "/user/signin", "/password-reset/reset", "/password-reset/request",
-						// station
-						"/station/getstations", "/station/deletestation",
-						//route
+						"/station/deletestation",
+						// route
 						"/route/allroutes",
 						// bus
-						"/bus/getbuses","/bus/getallbuses", 
-						//seats
+						"/bus/getbuses", "/bus/getallbuses",
+						// seats
 						"/seats/bus/{busId}",
-						"/seat/lock","/seat/unlock","/seat/{busid}",
-						//bookings
-						"/bookings/book","/bookings/getbookings/{userid}","/bookings/getbooking/{bookingId}","/bookings/getbookings",
-						//seatAllocation
+						"/seat/lock", "/seat/unlock", "/seat/{busid}",
+						// bookings
+						"/bookings/book", "/bookings/getbookings/{userid}", "/bookings/getbooking/{bookingId}",
+						"/bookings/getbookings",
+						// seatAllocation
 						"/passenger/bus/{busId}/seat-list",
-						//backendstatuscheck
+						// backendstatuscheck
 						"/check-backend-status",
-						"/payment/razorpay","/payment/verify-payment","/payment/refund",
-						//other
+						"/payment/razorpay", "/payment/verify-payment", "/payment/refund",
+						// other
 						"/v*/api-doc*/**", "/swagger-ui/**")
 				.permitAll().antMatchers(HttpMethod.OPTIONS).permitAll().antMatchers("/products/add").hasRole("ADMIN")
 				.anyRequest().authenticated().and().sessionManagement()
@@ -69,16 +73,19 @@ public class SecurityConfig {
 		return config.getAuthenticationManager();
 	}
 
-	@Bean
-	public CorsConfigurationSource corsConfigurationSource() {
-		CorsConfiguration configuration = new CorsConfiguration();
-		configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000","http://localhost:3001", "http://localhost:3002"));
-		configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-		configuration.setAllowedHeaders(Arrays.asList("*"));
-		configuration.setAllowCredentials(true);
+	// @Bean
+	// public CorsConfigurationSource corsConfigurationSource() {
+	// CorsConfiguration configuration = new CorsConfiguration();
+	// configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000","http://localhost:3001",
+	// "http://localhost:3002"));
+	// configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE",
+	// "OPTIONS"));
+	// configuration.setAllowedHeaders(Arrays.asList("*"));
+	// configuration.setAllowCredentials(true);
 
-		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-		source.registerCorsConfiguration("/**", configuration);
-		return source;
-	}
+	// UrlBasedCorsConfigurationSource source = new
+	// UrlBasedCorsConfigurationSource();
+	// source.registerCorsConfiguration("/**", configuration);
+	// return source;
+	// }
 }

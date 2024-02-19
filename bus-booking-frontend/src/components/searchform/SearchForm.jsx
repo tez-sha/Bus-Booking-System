@@ -8,7 +8,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import CardCarousel from "../cardCarousel/CardCarousel";
 import BusDetailsCard from "../busCard/BusDetailsCard";
-import {useNavigate} from "react-router-dom"
+import { useNavigate } from "react-router-dom";
 
 function SearchForm() {
   const [stationList, setStationList] = useState([]);
@@ -18,9 +18,9 @@ function SearchForm() {
     new Date(new Date().setHours(0, 0, 0, 0))
   );
   const [showCalendar, setShowCalendar] = useState(false);
-  const [bus,setBuses]=useState([]);  
+  const [bus, setBuses] = useState([]);
   const [noBusesFound, setNoBusesFound] = useState(false);
-  const navigate=useNavigate()
+  const navigate = useNavigate();
 
   const handleDateChange = (date) => {
     setSelectedDate(date);
@@ -73,26 +73,22 @@ function SearchForm() {
         setBuses(response.data);
         if (response.data.length === 0) {
           setNoBusesFound(true);
-          toast.warning(
-            "Oops! Bus Not found for Date or Route"
-          );
+          toast.warning("Oops! Bus Not found for Date or Route");
         } else {
           setNoBusesFound(false);
         }
-
       })
       .catch((error) => {
         console.error("Error fetching buses:", error);
       });
   };
-  
-  const handleBookNow=(id)=>{
-  navigate(`/buslayout/${id}`)
- 
-  }
-  useEffect(()=>{
- console.log(bus);
-  },[bus])
+
+  const handleBookNow = (id) => {
+    navigate(`/buslayout/${id}`);
+  };
+  useEffect(() => {
+    console.log(bus);
+  }, [bus]);
 
   return (
     <div className="container mt-5">
@@ -174,30 +170,33 @@ function SearchForm() {
             >
               Search
             </button>
-            {noBusesFound && <p>Oops! We do not have any bus scheduled for given stations on that date</p>}
-            {bus.map(bus => (
-                <BusDetailsCard
-                    key={bus.id}
-                    busNo={bus.busNo}
-                    from={bus.from}
-                    to={bus.to}
-                    startTime={bus.startTime}
-                    endTime={bus.endTime}
-                    duration={bus.duration}
-                    fare={bus.cost}
-                    handleBookNow={() => handleBookNow(bus.id)}
-                />
+            {noBusesFound && (
+              <p>
+                Oops! We do not have any bus scheduled for given stations on
+                that date
+              </p>
+            )}
+            {bus.map((bus) => (
+              <BusDetailsCard
+                key={bus.id}
+                busNo={bus.busNo}
+                from={bus.from}
+                to={bus.to}
+                startTime={bus.startTime}
+                endTime={bus.endTime}
+                duration={bus.duration}
+                fare={bus.cost}
+                handleBookNow={() => handleBookNow(bus.id)}
+              />
             ))}
             <div className="container mt-5">
-      <ToastContainer />
-    </div>
+              <ToastContainer />
+            </div>
           </div>
         </div>
-</div>
+      </div>
 
-        <CardCarousel />
- 
-      
+      <CardCarousel />
     </div>
   );
 }

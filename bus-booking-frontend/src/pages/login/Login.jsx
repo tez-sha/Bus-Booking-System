@@ -1,43 +1,44 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import styles from "./styles.module.css";
-import {axiosInst} from "../../service/axiosInstance";
+import { Link, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
+import { axiosInst } from "../../service/axiosInstance";
+import styles from "./styles.module.css";
 
 const Login = () => {
   const [data, setData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
-
+  const navigate = useNavigate();
   const handleChange = ({ currentTarget: input }) => {
     setData({ ...data, [input.name]: input.value });
   };
 
-	const handleSubmit = async (e) => {
-		e.preventDefault();
-		try {
-			const res=await axiosInst.post('/user/signin',data)
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await axiosInst.post("/user/signin", data);
       console.log(res.data);
-			localStorage.setItem("jwtToken", res.data.jwt);	
-      localStorage.setItem("id", res.data.id);	
-      
-			window.location = "/";
-		} catch (error) {
-			if (
-				error.response &&
-				error.response.status >= 400 &&
-				error.response.status <= 500
-			) {
-				setError(error.response.data.message);
-			}
+      localStorage.setItem("jwtToken", res.data.jwt);
+      localStorage.setItem("id", res.data.id);
+
+      // window.location = "/";
+      navigate("/dashboard");
+    } catch (error) {
+      if (
+        error.response &&
+        error.response.status >= 400 &&
+        error.response.status <= 500
+      ) {
+        setError(error.response.data.message);
+      }
       toast.warning(
         "Oops! Could not login, Please re-check the id and password"
       );
-		}
-	};
- 
+    }
+  };
+
   return (
     <>
-    <ToastContainer />
+      <ToastContainer />
       <div className={styles.login_container}>
         <div className={styles.login_form_container}>
           <div className={styles.left}>
@@ -66,7 +67,6 @@ const Login = () => {
                 Sign In
               </button>
               <Link to="/forgot-password">Forgot Password?</Link>
-             
             </form>
           </div>
           <div className={styles.right}>

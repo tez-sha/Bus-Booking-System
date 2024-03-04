@@ -3,6 +3,8 @@ package com.app.security;
 import java.util.Arrays;
 
 import org.springframework.beans.factory.annotation.Autowired;
+
+import static org.springframework.security.config.Customizer.withDefaults;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -15,9 +17,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @EnableWebSecurity
 @Configuration
@@ -35,35 +34,35 @@ public class SecurityConfig {
 
 	@Bean
 	public SecurityFilterChain authorizeRequests(HttpSecurity http) throws Exception {
-		http.cors().and().csrf().disable().exceptionHandling().authenticationEntryPoint(authEntry).and()
-				.authorizeRequests().antMatchers("/", "/static/**", "/assets/**",
-						// station
-						"/station/getstations")
-				.permitAll().and()
-				.authorizeRequests().antMatchers(
+		http.cors(withDefaults()).csrf(csrf -> csrf.disable())
+				.exceptionHandling(handling -> handling.authenticationEntryPoint(authEntry))
+				.authorizeRequests(requests -> requests.antMatchers(
+						// ui static files
+						"/", "/static/**", "/assets/**",
 						// user
 						"/user/signup", "/user/signin", "/password-reset/reset", "/password-reset/request",
-						"/station/deletestation",
+						// station
+						"/station/getstations",
 						// route
 						"/route/allroutes",
 						// bus
 						"/bus/getbuses", "/bus/getallbuses",
-						// seats
-						"/seats/bus/{busId}",
-						"/seat/lock", "/seat/unlock", "/seat/{busid}",
-						// bookings
-						"/bookings/book", "/bookings/getbookings/{userid}", "/bookings/getbooking/{bookingId}",
-						"/bookings/getbookings",
-						// seatAllocation
-						"/passenger/bus/{busId}/seat-list",
-						// backendstatuscheck
-						"/check-backend-status",
-						"/payment/razorpay", "/payment/verify-payment", "/payment/refund",
 						// other
-						"/v*/api-doc*/**", "/swagger-ui/**")
-				.permitAll().antMatchers(HttpMethod.OPTIONS).permitAll().antMatchers("/products/add").hasRole("ADMIN")
-				.anyRequest().authenticated().and().sessionManagement()
-				.sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
+						"/v*/api-doc*/**", "/swagger-ui/**",
+						// backendstatuscheck
+						"/check-backend-status").permitAll().antMatchers(
+								"/station/deletestation",
+								// seats
+								"/seats/bus/{busId}",
+								"/seat/lock", "/seat/unlock", "/seat/{busid}",
+								// bookings
+								"/bookings/book", "/bookings/getbookings/{userid}", "/bookings/getbooking/{bookingId}",
+								"/bookings/getbookings",
+								// seatAllocation
+								"/passenger/bus/{busId}/seat-list")
+						.hasAnyRole("ROLE_CUSTOMER", "ROLE_USER"))
+				.sessionManagement(management -> management
+						.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 		return http.build();
 	}
@@ -73,19 +72,4 @@ public class SecurityConfig {
 		return config.getAuthenticationManager();
 	}
 
-	// @Bean
-	// public CorsConfigurationSource corsConfigurationSource() {
-	// CorsConfiguration configuration = new CorsConfiguration();
-	// configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000","http://localhost:3001",
-	// "http://localhost:3002"));
-	// configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE",
-	// "OPTIONS"));
-	// configuration.setAllowedHeaders(Arrays.asList("*"));
-	// configuration.setAllowCredentials(true);
-
-	// UrlBasedCorsConfigurationSource source = new
-	// UrlBasedCorsConfigurationSource();
-	// source.registerCorsConfiguration("/**", configuration);
-	// return source;
-	// }
 }

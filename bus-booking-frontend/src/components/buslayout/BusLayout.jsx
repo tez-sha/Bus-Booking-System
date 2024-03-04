@@ -1,13 +1,13 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { MdOutlineChair } from "react-icons/md";
-import { axiosInst } from "../../service/axiosInstance";
-import { useParams } from "react-router-dom";
-import "./BusLayout.css"; // Import CSS file
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import useRazorpay from "react-razorpay";
 import Modal from "react-responsive-modal";
-import ConfirmationBox from "../confirmationBox/ConfirmationBox"
+import { useParams } from "react-router-dom";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { axiosInst } from "../../service/axiosInstance";
+import ConfirmationBox from "../ConfirmationBox/ConfirmationBox";
+import "./BusLayout.css"; // Import CSS file
 
 function BusLayout() {
   const [Razorpay] = useRazorpay();
@@ -21,15 +21,15 @@ function BusLayout() {
   const [verificationResult, setVerificationResult] = useState("");
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [confirmObject, setConfirmObject] = useState({
-    busNo: '',
+    busNo: "",
     noOfTickets: 0,
     cost: 0,
-    from: '',
-    to: ''
+    from: "",
+    to: "",
   });
   let totalSeats = 30;
   const { id } = useParams();
-  
+
   useEffect(() => {
     if (travelInfo && selectedSeats.length > 0) {
       setConfirmObject({
@@ -37,143 +37,122 @@ function BusLayout() {
         noOfTickets: selectedSeats.length,
         cost: travelInfo.fare * selectedSeats.length,
         from: travelInfo.from,
-        to: travelInfo.to
+        to: travelInfo.to,
       });
     }
   }, [travelInfo, selectedSeats]);
 
-  const bookSeatConcurrency=async ()=>{
-     
+  const bookSeatConcurrency = async () => {
     try {
-      console.log("bus id",id);
-      console.log("user id ",localStorage.get("id"));
-      console.log("seat no",selectedSeats);
+      console.log("bus id", id);
+      console.log("user id ", localStorage.get("id"));
+      console.log("seat no", selectedSeats);
 
       const res = await axiosInst.post(`/seat/lock`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("jwtToken")}`,
         },
       });
-      console.log(res.data,"///////");
+      console.log(res.data, "///////");
       // setTravelInfo(res.data);
       // totalSeats = res.data.totalSeats;
-      // // console.log(res.data,"............."); 
+      // // console.log(res.data,".............");
       // setSeats(res.data.bookedSeats);
     } catch (error) {
       console.log(error);
     }
-
-
-  }
-  const getSeatConcurrency=()=>{
-   
-    // get seats 
-   return true
-  }
-  const seatCheck=async ()=>{
-    //first check by getting data from temp db 
+  };
+  const getSeatConcurrency = () => {
+    // get seats
+    return true;
+  };
+  const seatCheck = async () => {
+    //first check by getting data from temp db
     // if found no bookin opps error
     // else book call bookseatcurrency
 
     // evry new user send req to both db and get already booking seats
-    if(getSeatConcurrency) bookSeatConcurrency;
-    
+    if (getSeatConcurrency) bookSeatConcurrency;
+
     return true;
-  }
-  const handleConfirm=async ()=>{
+  };
+  const handleConfirm = async () => {
+    console.log("hello");
+    const scriptLoaded = await loadScript(
+      "https://checkout.razorpay.com/v1/checkout.js"
+    );
 
-  console.log("hello");
-  const scriptLoaded = await loadScript(
-    "https://checkout.razorpay.com/v1/checkout.js"
-  );
+    if (scriptLoaded) {
+      try {
+        const response = await axiosInst.post("/payment/razorpay", {
+          amount: travelInfo.fare * passengerDetails.length,
+        });
 
-  if (scriptLoaded) {
-    try {
-      const response = await axiosInst.post("/payment/razorpay", {
-        amount: travelInfo.fare * passengerDetails.length,
-      });
+        const data = response.data;
 
-      const data = response.data;
+        console.log(data);
 
-      console.log(data);
+        const options = {
+          key: "rzp_test_bTDnw950m7Mzb4",
+          currency: data.currency,
+          amount: data.amount,
+          name: "Spark Bus",
+          description: "Spark Bus Booking ",
+          // image: motocross,
+          order_id: data.id,
+          theme: {
+            color: "#3bb19b",
+          },
+          handler: async function (response) {
+            const payload = {
+              paymentId: response.razorpay_payment_id,
+              razorpayOrderId: response.razorpay_order_id,
+              razorpaySignature: response.razorpay_signature,
+              busId: id, // Assuming busId is a fixed value or it can come from state
+              userId: localStorage.getItem("id"), // Assuming userId comes from localStorage or state
+              fare: travelInfo.fare * passengerDetails.length, // Calculating fare based on the number of passengers and fare per passenger
+              seatPassengerList: passengerDetails.map((passenger) => ({
+                seatNo: passenger.seatNumber, // Assuming seat numbers start from 1
+                passenger: {
+                  firstName: passenger.firstName,
+                  lastName: passenger.lastName,
+                  gender: passenger.gender,
+                  age: passenger.age,
+                },
+              })),
+            };
+            try {
+              const response1 = await axiosInst.post(
+                "/payment/verify-payment",
+                payload
+              );
 
-      const options = {
-        key: "rzp_test_bTDnw950m7Mzb4",
-        currency: data.currency,
-        amount: data.amount,
-        name: "Spark Bus",
-        description: "Spark Bus Booking ",
-        // image: motocross,
-        order_id: data.id,
-        theme: {
-          color: "#3bb19b",
-        },
-        handler: async function (response) {
-          
-          
-          const payload = {
-             paymentId : response.razorpay_payment_id,
-           razorpayOrderId : response.razorpay_order_id,
-           razorpaySignature : response.razorpay_signature,
-            busId: id, // Assuming busId is a fixed value or it can come from state
-            userId: localStorage.getItem('id'), // Assuming userId comes from localStorage or state
-            fare: travelInfo.fare * passengerDetails.length, // Calculating fare based on the number of passengers and fare per passenger
-            seatPassengerList: passengerDetails.map((passenger) => ({
-              seatNo: passenger.seatNumber, // Assuming seat numbers start from 1
-              passenger: {
-                firstName: passenger.firstName,
-                lastName: passenger.lastName,
-                gender: passenger.gender,
-                age: passenger.age
+              const data = response1.data;
+
+              if (data.success) {
+                setVerificationResult("Payment is successful");
+                toast.success("Payment Success");
+                setBookingSuccess(true); // Set booking success state to true
+              } else {
+                setVerificationResult("Payment is not successful");
+                toast.error("Payment Failed");
               }
-            }))
-          };
-          try {
-            const response1 = await axiosInst.post(
-              "/payment/verify-payment",
-             payload
-            );
-
-            const data = response1.data;
-
-            if (data.success) {
-              setVerificationResult("Payment is successful");
-              toast.success("Payment Success");
-              setBookingSuccess(true); // Set booking success state to true
-            } else {
-              setVerificationResult("Payment is not successful");
-              toast.error("Payment Failed");
+            } catch (error) {
+              console.error("Payment Verification Error:", error);
+              setVerificationResult("Payment verification failed");
             }
-          } catch (error) {
-            console.error("Payment Verification Error:", error);
-            setVerificationResult("Payment verification failed");
-          }
-        },
-      };
-                if (data.success) {
-                  setVerificationResult("Payment is successful");
-                  toast.success("Payment Success");
-                  setBookingSuccess(true); // Set booking success state to true
-                } else {
-                  setVerificationResult("Payment is not successful");
-                  toast.error(data.message);
-                }
-              } catch (error) {
-                console.error("Payment Verification Error:", error);
-                setVerificationResult("Payment verification failed");
-              }
-            },
-          };
+          },
+        };
 
-      var rzp1 = new Razorpay(options);
-      rzp1.open();
-    } catch (error) {
-      console.log("Failed to load Razorpay script.", error);
+        var rzp1 = new Razorpay(options);
+        rzp1.open();
+      } catch (error) {
+        console.log("Failed to load Razorpay script.", error);
+      }
+    } else {
+      console.log("Failed to load Razorpay script.");
     }
-  } else {
-    console.log("Failed to load Razorpay script.");
-  }
- }
+  };
 
   const loadScript = (src) => {
     return new Promise((resolve) => {
@@ -243,14 +222,11 @@ function BusLayout() {
         draggable: true,
       });
     } else {
-       
-          if(seatCheck){
-   console.log("seat check");
-
- }
+      if (seatCheck) {
+        console.log("seat check");
+      }
 
       console.log(confirmObject);
-      
     }
   };
 
@@ -438,11 +414,22 @@ function BusLayout() {
                   </div>
                 </div>
               ))}
-              <button onClick={() => setShowConfirmation(true)} disabled={selectedSeats.length === 0} >
+              <button
+                onClick={() => setShowConfirmation(true)}
+                disabled={selectedSeats.length === 0}
+              >
                 Book Ticket
               </button>
-              <Modal open={showConfirmation} onClose={() => setShowConfirmation(false)} center>
-              <ConfirmationBox onClose={() => setShowConfirmation(false)}  handleConfirm={handleConfirm} confirmObject={confirmObject} />
+              <Modal
+                open={showConfirmation}
+                onClose={() => setShowConfirmation(false)}
+                center
+              >
+                <ConfirmationBox
+                  onClose={() => setShowConfirmation(false)}
+                  handleConfirm={handleConfirm}
+                  confirmObject={confirmObject}
+                />
               </Modal>
             </form>
             {bookingSuccess && (
